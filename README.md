@@ -1,10 +1,9 @@
 # philiprehberger-priority_queue
 
-[![Tests](https://github.com/philiprehberger/rb-priority-queue/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rb-priority-queue/actions/workflows/ci.yml)
-[![Gem Version](https://badge.fury.io/rb/philiprehberger-priority_queue.svg)](https://rubygems.org/gems/philiprehberger-priority_queue)
-[![License](https://img.shields.io/github/license/philiprehberger/rb-priority-queue)](LICENSE)
+[![Gem Version](https://badge.fury.io/rb/philiprehberger-priority_queue.svg)](https://badge.fury.io/rb/philiprehberger-priority_queue)
+[![CI](https://github.com/philiprehberger/rb-priority-queue/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rb-priority-queue/actions/workflows/ci.yml)
 
-Binary heap priority queue with min/max modes and custom comparators
+Binary heap priority queue with min/max modes and custom comparators. Features O(log n) push/pop, priority updates, merge operations, and FIFO tie-breaking for equal priorities.
 
 ## Requirements
 
@@ -12,16 +11,14 @@ Binary heap priority queue with min/max modes and custom comparators
 
 ## Installation
 
-Add to your Gemfile:
+```sh
+gem install philiprehberger-priority_queue
+```
+
+Or add to your Gemfile:
 
 ```ruby
 gem 'philiprehberger-priority_queue'
-```
-
-Or install directly:
-
-```bash
-gem install philiprehberger-priority_queue
 ```
 
 ## Usage
@@ -29,80 +26,99 @@ gem install philiprehberger-priority_queue
 ```ruby
 require 'philiprehberger/priority_queue'
 
-pq = Philiprehberger::PriorityQueue::Queue.new
-pq.push('low', priority: 1)
-pq.push('high', priority: 10)
-pq.push('mid', priority: 5)
+# Min-heap (default) - lowest priority first
+queue = Philiprehberger::PriorityQueue::Queue.new
+queue.push('low', priority: 1)
+queue.push('high', priority: 10)
+queue.push('mid', priority: 5)
 
-pq.pop   # => "low"
-pq.pop   # => "mid"
-pq.pop   # => "high"
-```
+queue.pop   # => "low"
+queue.pop   # => "mid"
+queue.pop   # => "high"
 
-### Max-Heap
+# Max-heap - highest priority first
+queue = Philiprehberger::PriorityQueue::Queue.new(mode: :max)
+queue.push('task_a', priority: 3)
+queue.push('task_b', priority: 7)
+queue.pop   # => "task_b"
 
-```ruby
-pq = Philiprehberger::PriorityQueue::Queue.new(mode: :max)
-pq.push('low', priority: 1)
-pq.push('high', priority: 10)
-pq.pop   # => "high"
-```
+# Custom comparator
+queue = Philiprehberger::PriorityQueue::Queue.new { |a, b| a.length <=> b.length }
+queue.push('short', priority: 'short')
+queue.push('very long', priority: 'very long')
+queue.pop   # => "short"
 
-### Custom Comparator
+# Peek without removing
+queue = Philiprehberger::PriorityQueue::Queue.new
+queue.push('item', priority: 1)
+queue.peek  # => "item"
+queue.size  # => 1
 
-```ruby
-pq = Philiprehberger::PriorityQueue::Queue.new { |a, b| a[:priority] <=> b[:priority] }
-pq.push('task', priority: 5)
-```
+# Change priority
+queue = Philiprehberger::PriorityQueue::Queue.new
+queue.push('task', priority: 10)
+queue.change_priority('task', 1)  # now highest priority in min-heap
 
-### Updating Priorities
+# Merge queues
+merged = queue1.merge(queue2)
 
-```ruby
-pq = Philiprehberger::PriorityQueue::Queue.new
-pq.push('task_a', priority: 10)
-pq.push('task_b', priority: 5)
-pq.change_priority('task_a', 1)
-pq.pop  # => "task_a" (now has lowest priority)
-```
-
-### Merging Queues
-
-```ruby
-pq1 = Philiprehberger::PriorityQueue::Queue.new
-pq1.push('a', priority: 1)
-
-pq2 = Philiprehberger::PriorityQueue::Queue.new
-pq2.push('b', priority: 2)
-
-pq1.merge(pq2)
-pq1.size  # => 2
+# Other operations
+queue.include?('task')  # => true
+queue.to_a              # => items sorted by priority
+queue.empty?            # => false
+queue.clear             # removes all items
 ```
 
 ## API
 
-### `Philiprehberger::PriorityQueue::Queue`
+### `Queue.new(mode: :min, &comparator)`
 
-| Method | Description |
-|--------|-------------|
-| `.new(mode: :min)` | Create a min-heap (default) or max-heap |
-| `.new { \|a, b\| ... }` | Create with a custom comparator block |
-| `#push(item, priority:)` | Add an item with a priority |
-| `#pop` | Remove and return the highest-priority item |
-| `#peek` | View the highest-priority item without removing it |
-| `#size` | Number of items in the queue |
-| `#empty?` | Whether the queue is empty |
-| `#change_priority(item, new_priority)` | Update an item's priority |
-| `#to_a` | Return all items in priority order |
-| `#merge(other)` | Merge another queue into this one |
+Creates a new priority queue. Mode can be `:min` (default) or `:max`. An optional block provides a custom comparator.
+
+### `#push(item, priority:)` / `#<<`
+
+Adds an item with the given priority. Returns self. The `<<` operator accepts a hash: `queue << { item: 'x', priority: 1 }`.
+
+### `#pop`
+
+Removes and returns the highest-priority item. Returns `nil` if empty.
+
+### `#peek`
+
+Returns the highest-priority item without removing it. Returns `nil` if empty.
+
+### `#size` / `#empty?`
+
+Returns the number of items or whether the queue is empty.
+
+### `#change_priority(item, new_priority)`
+
+Updates the priority of an existing item and re-heapifies. Raises `ArgumentError` if the item is not found.
+
+### `#to_a`
+
+Returns all items sorted by priority.
+
+### `#include?(item)`
+
+Returns `true` if the item is in the queue.
+
+### `#clear`
+
+Removes all items from the queue.
+
+### `#merge(other)`
+
+Returns a new queue containing items from both queues. Does not modify the originals.
 
 ## Development
 
-```bash
+```sh
 bundle install
-bundle exec rspec      # Run tests
-bundle exec rubocop    # Check code style
+bundle exec rspec
+bundle exec rubocop
 ```
 
 ## License
 
-MIT
+MIT License. See [LICENSE](LICENSE) for details.

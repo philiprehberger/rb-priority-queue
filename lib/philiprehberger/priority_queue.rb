@@ -4,164 +4,142 @@ require_relative 'priority_queue/version'
 
 module Philiprehberger
   module PriorityQueue
-    class Error < StandardError; end
-
-    # A binary heap priority queue supporting min-heap, max-heap, and custom comparators
-    #
-    # @example Min-heap (default)
-    #   pq = Queue.new
-    #   pq.push('low', priority: 1)
-    #   pq.push('high', priority: 10)
-    #   pq.pop  # => "low"
-    #
-    # @example Max-heap
-    #   pq = Queue.new(mode: :max)
-    #   pq.push('low', priority: 1)
-    #   pq.push('high', priority: 10)
-    #   pq.pop  # => "high"
     class Queue
-      # Create a new priority queue
-      #
-      # @param mode [Symbol] :min (default) or :max
-      # @yield [a, b] optional custom comparator block
-      # @raise [Error] if mode is invalid
+      attr_reader :size
+
       def initialize(mode: :min, &comparator)
-        unless %i[min max].include?(mode)
-          raise Error, "Invalid mode: #{mode}. Use :min or :max"
-        end
-
         @heap = []
-        @comparator = comparator || default_comparator(mode)
+        @size = 0
+        @insertion_counter = 0
+        @item_index = {}
+
+        @comparator = if comparator
+                        comparator
+                      elsif mode == :max
+                        ->(a, b) { b <=> a }
+                      else
+                        ->(a, b) { a <=> b }
+                      end
       end
 
-      # Push an item onto the queue with a given priority
-      #
-      # @param item [Object] the item to enqueue
-      # @param priority [Numeric] the priority value
-      # @return [self]
-      def push(item, priority: 0)
-        entry = { item: item, priority: priority }
+      def push(item, priority:)
+        entry = [priority, @insertion_counter, item]
+        @insertion_counter += 1
         @heap << entry
-        bubble_up(@heap.length - 1)
+        @item_index[item] = @size
+        @size += 1
+        bubble_up(@size - 1)
         self
       end
 
-      # Remove and return the highest-priority item
-      #
-      # @return [Object, nil] the item, or nil if empty
+      def <<(item_with_priority)
+        raise ArgumentError, 'Expected a hash with :item and :priority keys' unless item_with_priority.is_a?(Hash)
+
+        push(item_with_priority[:item], priority: item_with_priority[:priority])
+      end
+
       def pop
-        return nil if @heap.empty?
+        return nil if empty?
 
-        swap(0, @heap.length - 1)
+        swap(0, @size - 1)
         entry = @heap.pop
-        bubble_down(0) unless @heap.empty?
-        entry[:item]
+        @size -= 1
+        @item_index.delete(entry[2])
+        bubble_down(0) unless empty?
+        entry[2]
       end
 
-      # Return the highest-priority item without removing it
-      #
-      # @return [Object, nil] the item, or nil if empty
       def peek
-        return nil if @heap.empty?
+        return nil if empty?
 
-        @heap[0][:item]
+        @heap[0][2]
       end
 
-      # Return the number of items in the queue
-      #
-      # @return [Integer]
-      def size
-        @heap.length
-      end
-
-      # Check if the queue is empty
-      #
-      # @return [Boolean]
       def empty?
-        @heap.empty?
+        @size.zero?
       end
 
-      # Update the priority of an existing item
-      #
-      # @param item [Object] the item to update
-      # @param new_priority [Numeric] the new priority
-      # @return [self]
-      # @raise [Error] if the item is not found
       def change_priority(item, new_priority)
-        index = @heap.index { |e| e[:item] == item }
-        raise Error, 'Item not found in queue' if index.nil?
+        idx = @item_index[item]
+        raise ArgumentError, "Item not found in queue: #{item.inspect}" if idx.nil?
 
-        @heap[index][:priority] = new_priority
-        bubble_up(index)
-        bubble_down(index)
+        old_priority = @heap[idx][0]
+        @heap[idx] = [new_priority, @heap[idx][1], item]
+
+        cmp = @comparator.call(new_priority, old_priority)
+        if cmp.negative?
+          bubble_up(idx)
+        elsif cmp.positive?
+          bubble_down(idx)
+        end
         self
       end
 
-      # Return all items as a sorted array
-      #
-      # @return [Array] items in priority order
       def to_a
-        clone = Queue.new(&@comparator)
-        @heap.each { |entry| clone.push(entry[:item], priority: entry[:priority]) }
-
-        result = []
-        result << clone.pop until clone.empty?
-        result
+        @heap.sort { |a, b| compare_entries(a, b) }.map { |entry| entry[2] }
       end
 
-      # Merge another priority queue into this one
-      #
-      # @param other [Queue] the queue to merge
-      # @return [self]
-      def merge(other)
-        other.each_entry { |item, priority| push(item, priority: priority) }
+      def include?(item)
+        @item_index.key?(item)
+      end
+
+      def clear
+        @heap.clear
+        @item_index.clear
+        @size = 0
         self
       end
 
-      # @api private
-      def each_entry
-        @heap.each { |entry| yield entry[:item], entry[:priority] }
+      def merge(other)
+        merged = self.class.new(&@comparator)
+        @heap.each { |entry| merged.push(entry[2], priority: entry[0]) }
+        other.each_entry { |entry| merged.push(entry[2], priority: entry[0]) }
+        merged
+      end
+
+      protected
+
+      def each_entry(&)
+        @heap.each(&)
       end
 
       private
 
-      def default_comparator(mode)
-        case mode
-        when :min then ->(a, b) { a[:priority] <=> b[:priority] }
-        when :max then ->(a, b) { b[:priority] <=> a[:priority] }
+      def compare_entries(a, b)
+        cmp = @comparator.call(a[0], b[0])
+        cmp.zero? ? a[1] <=> b[1] : cmp
+      end
+
+      def bubble_up(idx)
+        while idx.positive?
+          parent = (idx - 1) / 2
+          break unless compare_entries(@heap[idx], @heap[parent]).negative?
+
+          swap(idx, parent)
+          idx = parent
         end
       end
 
-      def bubble_up(index)
-        while index.positive?
-          parent = (index - 1) / 2
-          break unless @comparator.call(@heap[index], @heap[parent]).negative?
-
-          swap(index, parent)
-          index = parent
-        end
-      end
-
-      def bubble_down(index)
-        size = @heap.length
-
+      def bubble_down(idx)
         loop do
-          smallest = index
-          left = 2 * index + 1
-          right = 2 * index + 2
+          smallest = idx
+          left = (2 * idx) + 1
+          right = (2 * idx) + 2
 
-          smallest = left if left < size && @comparator.call(@heap[left], @heap[smallest]).negative?
-          smallest = right if right < size && @comparator.call(@heap[right], @heap[smallest]).negative?
+          smallest = left if left < @size && compare_entries(@heap[left], @heap[smallest]).negative?
+          smallest = right if right < @size && compare_entries(@heap[right], @heap[smallest]).negative?
 
-          break if smallest == index
+          break if smallest == idx
 
-          swap(index, smallest)
-          index = smallest
+          swap(idx, smallest)
+          idx = smallest
         end
       end
 
       def swap(i, j)
         @heap[i], @heap[j] = @heap[j], @heap[i]
+        @item_index[@heap[i][2]] = i
+        @item_index[@heap[j][2]] = j
       end
     end
   end
