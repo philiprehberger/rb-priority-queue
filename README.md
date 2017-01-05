@@ -4,7 +4,7 @@
 [![Gem Version](https://badge.fury.io/rb/philiprehberger-priority_queue.svg)](https://rubygems.org/gems/philiprehberger-priority_queue)
 [![License](https://img.shields.io/github/license/philiprehberger/rb-priority-queue)](LICENSE)
 
-Binary heap priority queue with min/max modes and custom comparators. Features O(log n) push/pop, priority updates, merge operations, and FIFO tie-breaking for equal priorities.
+Binary heap priority queue with min/max modes, custom comparators, and priority updates
 
 ## Requirements
 
@@ -12,14 +12,16 @@ Binary heap priority queue with min/max modes and custom comparators. Features O
 
 ## Installation
 
-```sh
-gem install philiprehberger-priority_queue
-```
-
-Or add to your Gemfile:
+Add to your Gemfile:
 
 ```ruby
 gem 'philiprehberger-priority_queue'
+```
+
+Or install directly:
+
+```bash
+gem install philiprehberger-priority_queue
 ```
 
 ## Usage
@@ -114,7 +116,7 @@ Returns a new queue containing items from both queues. Does not modify the origi
 
 ## Development
 
-```sh
+```bash
 bundle install
 bundle exec rspec
 bundle exec rubocop
@@ -122,4 +124,4 @@ bundle exec rubocop
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+MIT
