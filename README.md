@@ -27,7 +27,7 @@ gem install philiprehberger-priority_queue
 ## Usage
 
 ```ruby
-require 'philiprehberger/priority_queue'
+require "philiprehberger/priority_queue"
 
 # Min-heap (default) - lowest priority first
 queue = Philiprehberger::PriorityQueue::Queue.new
