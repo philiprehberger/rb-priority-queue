@@ -2,6 +2,6 @@
 
 module Philiprehberger
   module PriorityQueue
-    VERSION = "0.1.9"
+    VERSION = '0.1.9'
   end
 end
