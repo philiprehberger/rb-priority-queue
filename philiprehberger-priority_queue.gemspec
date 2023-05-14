@@ -11,14 +11,14 @@ Gem::Specification.new do |spec|
   spec.summary = 'Binary heap priority queue with min/max modes, custom comparators, and priority updates'
   spec.description = 'A binary heap-based priority queue supporting min-heap, max-heap, and custom comparator ' \
                      'modes. Features O(log n) push/pop, priority changes, merge operations, and FIFO tie-breaking.'
-  spec.homepage = 'https://github.com/philiprehberger/rb-priority-queue'
+  spec.homepage      = 'https://philiprehberger.com/open-source-packages/ruby/philiprehberger-priority_queue'
   spec.license = 'MIT'
   spec.required_ruby_version = '>= 3.1'
 
   spec.metadata['homepage_uri'] = spec.homepage
-  spec.metadata['source_code_uri'] = spec.homepage
-  spec.metadata['changelog_uri'] = "#{spec.homepage}/blob/main/CHANGELOG.md"
-  spec.metadata['bug_tracker_uri'] = "#{spec.homepage}/issues"
+  spec.metadata['source_code_uri']       = 'https://github.com/philiprehberger/rb-priority-queue'
+  spec.metadata['changelog_uri']         = 'https://github.com/philiprehberger/rb-priority-queue/blob/main/CHANGELOG.md'
+  spec.metadata['bug_tracker_uri']       = 'https://github.com/philiprehberger/rb-priority-queue/issues'
   spec.metadata['rubygems_mfa_required'] = 'true'
 
   spec.files = Dir['lib/**/*.rb', 'LICENSE', 'README.md', 'CHANGELOG.md']
