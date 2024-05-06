@@ -5,6 +5,8 @@ require_relative 'priority_queue/version'
 module Philiprehberger
   module PriorityQueue
     class Queue
+      include Enumerable
+
       attr_reader :size
 
       def initialize(mode: :min, &comparator)
@@ -88,6 +90,55 @@ module Philiprehberger
         @item_index.clear
         @size = 0
         self
+      end
+
+      def each(&block)
+        return enum_for(:each) unless block
+
+        sorted = @heap.sort { |a, b| compare_entries(a, b) }
+        sorted.each { |entry| block.call(entry[2], entry[0]) }
+        self
+      end
+
+      def push_many(items)
+        items.each { |h| push(h[:item], priority: h[:priority]) }
+        self
+      end
+
+      def peek_priority
+        return nil if empty?
+
+        @heap[0][0]
+      end
+
+      def drain
+        result = []
+        result << pop until empty?
+        result
+      end
+
+      def delete(item)
+        idx = @item_index[item]
+        return nil if idx.nil?
+
+        if idx == @size - 1
+          entry = @heap.pop
+          @size -= 1
+          @item_index.delete(item)
+          return entry[2]
+        end
+
+        swap(idx, @size - 1)
+        entry = @heap.pop
+        @size -= 1
+        @item_index.delete(item)
+        bubble_up(idx)
+        bubble_down(idx)
+        entry[2]
+      end
+
+      def priorities
+        @heap.map { |entry| entry[0] }.uniq.sort
       end
 
       def merge(other)

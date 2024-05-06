@@ -412,4 +412,246 @@ RSpec.describe Philiprehberger::PriorityQueue::Queue do
       expect(queue.pop).to be_nil
     end
   end
+
+  describe 'Enumerable' do
+    it 'includes Enumerable' do
+      expect(described_class.ancestors).to include(Enumerable)
+    end
+
+    it 'yields [item, priority] pairs in priority order' do
+      queue = described_class.new
+      queue.push('c', priority: 3)
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 2)
+
+      pairs = queue.map { |item, priority| [item, priority] }
+      expect(pairs).to eq([['a', 1], ['b', 2], ['c', 3]])
+    end
+
+    it 'does not modify the queue' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 2)
+      queue.each { |_item, _priority| }
+      expect(queue.size).to eq(2)
+    end
+
+    it 'returns an enumerator when no block given' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+      expect(queue.each).to be_a(Enumerator)
+    end
+
+    it 'supports map via Enumerable' do
+      queue = described_class.new
+      queue.push('x', priority: 10)
+      queue.push('y', priority: 20)
+
+      result = queue.map { |item, _priority| item.upcase }
+      expect(result).to eq(%w[X Y])
+    end
+
+    it 'supports select via Enumerable' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 5)
+      queue.push('c', priority: 10)
+
+      result = queue.select { |_item, priority| priority > 3 }
+      expect(result).to eq([['b', 5], ['c', 10]])
+    end
+
+    it 'works with an empty queue' do
+      queue = described_class.new
+      expect(queue.map { |item, _| item }).to eq([])
+    end
+  end
+
+  describe '#push_many' do
+    it 'adds multiple items from array of hashes' do
+      queue = described_class.new
+      queue.push_many([{ item: 'c', priority: 3 }, { item: 'a', priority: 1 }, { item: 'b', priority: 2 }])
+
+      expect(queue.size).to eq(3)
+      expect(queue.pop).to eq('a')
+      expect(queue.pop).to eq('b')
+      expect(queue.pop).to eq('c')
+    end
+
+    it 'returns self for chaining' do
+      queue = described_class.new
+      result = queue.push_many([{ item: 'a', priority: 1 }])
+      expect(result).to be(queue)
+    end
+
+    it 'handles empty array' do
+      queue = described_class.new
+      queue.push_many([])
+      expect(queue.size).to eq(0)
+    end
+
+    it 'works with existing items in the queue' do
+      queue = described_class.new
+      queue.push('x', priority: 5)
+      queue.push_many([{ item: 'a', priority: 1 }, { item: 'z', priority: 10 }])
+
+      expect(queue.size).to eq(3)
+      expect(queue.pop).to eq('a')
+    end
+  end
+
+  describe '#peek_priority' do
+    it 'returns the top priority value' do
+      queue = described_class.new
+      queue.push('a', priority: 5)
+      queue.push('b', priority: 2)
+      queue.push('c', priority: 8)
+
+      expect(queue.peek_priority).to eq(2)
+    end
+
+    it 'returns nil on empty queue' do
+      queue = described_class.new
+      expect(queue.peek_priority).to be_nil
+    end
+
+    it 'returns the max priority for max-heap' do
+      queue = described_class.new(mode: :max)
+      queue.push('a', priority: 5)
+      queue.push('b', priority: 10)
+
+      expect(queue.peek_priority).to eq(10)
+    end
+
+    it 'does not modify the queue' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+      queue.peek_priority
+      expect(queue.size).to eq(1)
+    end
+  end
+
+  describe '#drain' do
+    it 'returns all items in priority order' do
+      queue = described_class.new
+      queue.push('c', priority: 3)
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 2)
+
+      expect(queue.drain).to eq(%w[a b c])
+    end
+
+    it 'leaves the queue empty' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 2)
+      queue.drain
+
+      expect(queue.empty?).to be true
+      expect(queue.size).to eq(0)
+    end
+
+    it 'returns empty array for empty queue' do
+      queue = described_class.new
+      expect(queue.drain).to eq([])
+    end
+
+    it 'works with max-heap' do
+      queue = described_class.new(mode: :max)
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 3)
+      queue.push('c', priority: 2)
+
+      expect(queue.drain).to eq(%w[b c a])
+    end
+  end
+
+  describe '#delete' do
+    it 'removes and returns the item' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 2)
+      queue.push('c', priority: 3)
+
+      expect(queue.delete('b')).to eq('b')
+      expect(queue.size).to eq(2)
+      expect(queue.include?('b')).to be false
+    end
+
+    it 'returns nil for item not in queue' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+      expect(queue.delete('missing')).to be_nil
+    end
+
+    it 'maintains heap order after deletion' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 2)
+      queue.push('c', priority: 3)
+      queue.push('d', priority: 4)
+      queue.push('e', priority: 5)
+
+      queue.delete('c')
+
+      expect(queue.pop).to eq('a')
+      expect(queue.pop).to eq('b')
+      expect(queue.pop).to eq('d')
+      expect(queue.pop).to eq('e')
+    end
+
+    it 'handles deleting the last item' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+
+      expect(queue.delete('a')).to eq('a')
+      expect(queue.empty?).to be true
+    end
+
+    it 'handles deleting the top-priority item' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 2)
+
+      queue.delete('a')
+      expect(queue.peek).to eq('b')
+    end
+
+    it 'returns nil on empty queue' do
+      queue = described_class.new
+      expect(queue.delete('x')).to be_nil
+    end
+  end
+
+  describe '#priorities' do
+    it 'returns sorted unique priority values' do
+      queue = described_class.new
+      queue.push('a', priority: 3)
+      queue.push('b', priority: 1)
+      queue.push('c', priority: 3)
+      queue.push('d', priority: 2)
+
+      expect(queue.priorities).to eq([1, 2, 3])
+    end
+
+    it 'returns empty array for empty queue' do
+      queue = described_class.new
+      expect(queue.priorities).to eq([])
+    end
+
+    it 'handles single item' do
+      queue = described_class.new
+      queue.push('a', priority: 5)
+      expect(queue.priorities).to eq([5])
+    end
+
+    it 'handles negative and float priorities' do
+      queue = described_class.new
+      queue.push('a', priority: -1)
+      queue.push('b', priority: 2.5)
+      queue.push('c', priority: 0)
+
+      expect(queue.priorities).to eq([-1, 0, 2.5])
+    end
+  end
 end
