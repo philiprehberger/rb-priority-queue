@@ -57,6 +57,18 @@ module Philiprehberger
         @heap[0][2]
       end
 
+      def pop_n(n)
+        raise ArgumentError, "n must be non-negative, got #{n}" if n.negative?
+
+        result = []
+        n.times do
+          break if empty?
+
+          result << pop
+        end
+        result
+      end
+
       def empty?
         @size.zero?
       end

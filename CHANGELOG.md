@@ -7,6 +7,11 @@ and this gem adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-04-15
+
+### Added
+- `Queue#pop_n(n)` to pop up to `n` items in priority order and return them as an array; returns `[]` for empty queues or `n == 0`; raises `ArgumentError` for negative `n`
+
 ## [0.2.1] - 2026-04-15
 
 ### Fixed

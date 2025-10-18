@@ -566,6 +566,66 @@ RSpec.describe Philiprehberger::PriorityQueue::Queue do
     end
   end
 
+  describe '#pop_n' do
+    it 'returns [] when n is 0' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 2)
+
+      expect(queue.pop_n(0)).to eq([])
+      expect(queue.size).to eq(2)
+    end
+
+    it 'returns items in priority order' do
+      queue = described_class.new
+      queue.push('c', priority: 3)
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 2)
+      queue.push('d', priority: 4)
+
+      expect(queue.pop_n(3)).to eq(%w[a b c])
+      expect(queue.size).to eq(1)
+    end
+
+    it 'returns all items when n exceeds size' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 2)
+      queue.push('c', priority: 3)
+
+      expect(queue.pop_n(queue.size + 5)).to eq(%w[a b c])
+      expect(queue.empty?).to be true
+    end
+
+    it 'drains the queue when n equals size' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 2)
+
+      expect(queue.pop_n(2)).to eq(%w[a b])
+      expect(queue.empty?).to be true
+    end
+
+    it 'returns [] for an empty queue' do
+      queue = described_class.new
+      expect(queue.pop_n(5)).to eq([])
+    end
+
+    it 'raises ArgumentError for negative n' do
+      queue = described_class.new
+      expect { queue.pop_n(-1) }.to raise_error(ArgumentError)
+    end
+
+    it 'works with max-heap mode' do
+      queue = described_class.new(mode: :max)
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 3)
+      queue.push('c', priority: 2)
+
+      expect(queue.pop_n(2)).to eq(%w[b c])
+    end
+  end
+
   describe '#delete' do
     it 'removes and returns the item' do
       queue = described_class.new
