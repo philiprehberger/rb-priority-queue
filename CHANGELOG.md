@@ -7,6 +7,11 @@ and this gem adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-03-22
+
+### Added
+- Expanded test suite from 23 to 30+ examples covering large queues, change_priority edge cases, clear-and-re-add, to_a order, merge interleaving, negative/float priorities, and FIFO tie-breaking
+
 ## [0.1.2] - 2026-03-22
 
 ### Fixed

@@ -1,6 +1,7 @@
 # philiprehberger-priority_queue
 
 [![Gem Version](https://badge.fury.io/rb/philiprehberger-priority_queue.svg)](https://badge.fury.io/rb/philiprehberger-priority_queue)
+$badge_line
 [![CI](https://github.com/philiprehberger/rb-priority-queue/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rb-priority-queue/actions/workflows/ci.yml)
 
 Binary heap priority queue with min/max modes and custom comparators. Features O(log n) push/pop, priority updates, merge operations, and FIFO tie-breaking for equal priorities.
