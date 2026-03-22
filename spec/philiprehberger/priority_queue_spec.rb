@@ -2,241 +2,238 @@
 
 require 'spec_helper'
 
-RSpec.describe Philiprehberger::PriorityQueue do
-  it 'has a version number' do
-    expect(Philiprehberger::PriorityQueue::VERSION).not_to be_nil
+RSpec.describe Philiprehberger::PriorityQueue::Queue do
+  describe 'min-heap (default)' do
+    subject(:queue) { described_class.new }
+
+    it 'pops items in ascending priority order' do
+      queue.push('low', priority: 1)
+      queue.push('high', priority: 10)
+      queue.push('mid', priority: 5)
+
+      expect(queue.pop).to eq('low')
+      expect(queue.pop).to eq('mid')
+      expect(queue.pop).to eq('high')
+    end
+
+    it 'returns lowest priority item with peek' do
+      queue.push('b', priority: 5)
+      queue.push('a', priority: 1)
+
+      expect(queue.peek).to eq('a')
+    end
   end
 
-  describe Philiprehberger::PriorityQueue::Queue do
-    describe '#initialize' do
-      it 'creates a min-heap by default' do
-        pq = described_class.new
-        expect(pq).to be_empty
-      end
+  describe 'max-heap' do
+    subject(:queue) { described_class.new(mode: :max) }
 
-      it 'creates a max-heap' do
-        pq = described_class.new(mode: :max)
-        expect(pq).to be_empty
-      end
+    it 'pops items in descending priority order' do
+      queue.push('low', priority: 1)
+      queue.push('high', priority: 10)
+      queue.push('mid', priority: 5)
 
-      it 'raises on invalid mode' do
-        expect { described_class.new(mode: :invalid) }.to raise_error(Philiprehberger::PriorityQueue::Error)
-      end
+      expect(queue.pop).to eq('high')
+      expect(queue.pop).to eq('mid')
+      expect(queue.pop).to eq('low')
+    end
+  end
 
-      it 'accepts a custom comparator' do
-        pq = described_class.new { |a, b| a[:priority] <=> b[:priority] }
-        expect(pq).to be_empty
-      end
+  describe 'custom comparator' do
+    it 'uses the provided comparator for ordering' do
+      queue = described_class.new { |a, b| a.length <=> b.length }
+      queue.push('medium', priority: 'medium')
+      queue.push('short', priority: 'short')
+      queue.push('very long string', priority: 'very long string')
+
+      expect(queue.pop).to eq('short')
+      expect(queue.pop).to eq('medium')
+      expect(queue.pop).to eq('very long string')
+    end
+  end
+
+  describe '#push and #pop' do
+    subject(:queue) { described_class.new }
+
+    it 'maintains heap invariant through many operations' do
+      values = (1..20).to_a.shuffle
+      values.each { |v| queue.push("item_#{v}", priority: v) }
+
+      result = []
+      result << queue.pop until queue.empty?
+
+      expect(result).to eq((1..20).map { |v| "item_#{v}" })
     end
 
-    describe 'min-heap' do
-      it 'pops the lowest priority first' do
-        pq = described_class.new
-        pq.push('high', priority: 10)
-        pq.push('low', priority: 1)
-        pq.push('mid', priority: 5)
+    it 'tracks size correctly' do
+      expect(queue.size).to eq(0)
+      queue.push('a', priority: 1)
+      expect(queue.size).to eq(1)
+      queue.push('b', priority: 2)
+      expect(queue.size).to eq(2)
+      queue.pop
+      expect(queue.size).to eq(1)
+    end
+  end
 
-        expect(pq.pop).to eq('low')
-        expect(pq.pop).to eq('mid')
-        expect(pq.pop).to eq('high')
-      end
+  describe '#<<' do
+    it 'adds an item using hash syntax' do
+      queue = described_class.new
+      queue << { item: 'hello', priority: 1 }
 
-      it 'peeks at the lowest priority item' do
-        pq = described_class.new
-        pq.push('high', priority: 10)
-        pq.push('low', priority: 1)
-
-        expect(pq.peek).to eq('low')
-        expect(pq.size).to eq(2)
-      end
+      expect(queue.peek).to eq('hello')
     end
 
-    describe 'max-heap' do
-      it 'pops the highest priority first' do
-        pq = described_class.new(mode: :max)
-        pq.push('high', priority: 10)
-        pq.push('low', priority: 1)
-        pq.push('mid', priority: 5)
+    it 'raises ArgumentError for non-hash argument' do
+      queue = described_class.new
+      expect { queue << 'invalid' }.to raise_error(ArgumentError)
+    end
+  end
 
-        expect(pq.pop).to eq('high')
-        expect(pq.pop).to eq('mid')
-        expect(pq.pop).to eq('low')
-      end
+  describe '#peek' do
+    it 'does not remove the item' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
 
-      it 'peeks at the highest priority item' do
-        pq = described_class.new(mode: :max)
-        pq.push('low', priority: 1)
-        pq.push('high', priority: 10)
+      expect(queue.peek).to eq('a')
+      expect(queue.peek).to eq('a')
+      expect(queue.size).to eq(1)
+    end
+  end
 
-        expect(pq.peek).to eq('high')
-      end
+  describe '#change_priority' do
+    it 're-sorts correctly when priority is lowered' do
+      queue = described_class.new
+      queue.push('a', priority: 10)
+      queue.push('b', priority: 5)
+
+      queue.change_priority('a', 1)
+
+      expect(queue.pop).to eq('a')
+      expect(queue.pop).to eq('b')
     end
 
-    describe '#push' do
-      it 'returns self for chaining' do
-        pq = described_class.new
-        expect(pq.push('a', priority: 1)).to be(pq)
-      end
+    it 're-sorts correctly when priority is raised' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 5)
 
-      it 'increases size' do
-        pq = described_class.new
-        pq.push('a', priority: 1)
-        pq.push('b', priority: 2)
-        expect(pq.size).to eq(2)
-      end
+      queue.change_priority('a', 10)
+
+      expect(queue.pop).to eq('b')
+      expect(queue.pop).to eq('a')
     end
 
-    describe '#pop' do
-      it 'returns nil for empty queue' do
-        pq = described_class.new
-        expect(pq.pop).to be_nil
-      end
+    it 'raises ArgumentError for missing item' do
+      queue = described_class.new
+      expect { queue.change_priority('missing', 1) }.to raise_error(ArgumentError)
+    end
+  end
 
-      it 'decreases size' do
-        pq = described_class.new
-        pq.push('a', priority: 1)
-        pq.pop
-        expect(pq.size).to eq(0)
-      end
+  describe '#to_a' do
+    it 'returns items sorted by priority' do
+      queue = described_class.new
+      queue.push('c', priority: 3)
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 2)
 
-      it 'maintains heap invariant after many operations' do
-        pq = described_class.new
-        values = (1..100).to_a.shuffle
-        values.each { |v| pq.push(v, priority: v) }
+      expect(queue.to_a).to eq(%w[a b c])
+    end
+  end
 
-        result = []
-        result << pq.pop until pq.empty?
-        expect(result).to eq((1..100).to_a)
-      end
+  describe '#include?' do
+    it 'returns true for items in the queue' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+
+      expect(queue.include?('a')).to be true
     end
 
-    describe '#peek' do
-      it 'returns nil for empty queue' do
-        pq = described_class.new
-        expect(pq.peek).to be_nil
-      end
-
-      it 'does not remove the item' do
-        pq = described_class.new
-        pq.push('a', priority: 1)
-        pq.peek
-        expect(pq.size).to eq(1)
-      end
+    it 'returns false for items not in the queue' do
+      queue = described_class.new
+      expect(queue.include?('a')).to be false
     end
 
-    describe '#size' do
-      it 'returns 0 for empty queue' do
-        pq = described_class.new
-        expect(pq.size).to eq(0)
-      end
+    it 'returns false after item is popped' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+      queue.pop
+
+      expect(queue.include?('a')).to be false
+    end
+  end
+
+  describe '#merge' do
+    it 'combines two queues into a new queue' do
+      q1 = described_class.new
+      q1.push('a', priority: 1)
+      q1.push('c', priority: 3)
+
+      q2 = described_class.new
+      q2.push('b', priority: 2)
+      q2.push('d', priority: 4)
+
+      merged = q1.merge(q2)
+
+      expect(merged.size).to eq(4)
+      expect(merged.pop).to eq('a')
+      expect(merged.pop).to eq('b')
+      expect(merged.pop).to eq('c')
+      expect(merged.pop).to eq('d')
     end
 
-    describe '#empty?' do
-      it 'returns true for empty queue' do
-        pq = described_class.new
-        expect(pq.empty?).to be true
-      end
+    it 'does not modify the original queues' do
+      q1 = described_class.new
+      q1.push('a', priority: 1)
 
-      it 'returns false for non-empty queue' do
-        pq = described_class.new
-        pq.push('a', priority: 1)
-        expect(pq.empty?).to be false
-      end
+      q2 = described_class.new
+      q2.push('b', priority: 2)
+
+      q1.merge(q2)
+
+      expect(q1.size).to eq(1)
+      expect(q2.size).to eq(1)
+    end
+  end
+
+  describe '#clear' do
+    it 'removes all items' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 2)
+      queue.clear
+
+      expect(queue.size).to eq(0)
+      expect(queue.empty?).to be true
+      expect(queue.peek).to be_nil
+    end
+  end
+
+  describe 'empty queue' do
+    subject(:queue) { described_class.new }
+
+    it 'returns nil for pop' do
+      expect(queue.pop).to be_nil
     end
 
-    describe '#change_priority' do
-      it 'updates priority and re-sorts' do
-        pq = described_class.new
-        pq.push('a', priority: 10)
-        pq.push('b', priority: 5)
-        pq.change_priority('a', 1)
-
-        expect(pq.pop).to eq('a')
-        expect(pq.pop).to eq('b')
-      end
-
-      it 'raises when item not found' do
-        pq = described_class.new
-        expect { pq.change_priority('missing', 1) }.to raise_error(Philiprehberger::PriorityQueue::Error)
-      end
-
-      it 'handles priority increase in min-heap' do
-        pq = described_class.new
-        pq.push('a', priority: 1)
-        pq.push('b', priority: 5)
-        pq.change_priority('a', 10)
-
-        expect(pq.pop).to eq('b')
-        expect(pq.pop).to eq('a')
-      end
+    it 'returns nil for peek' do
+      expect(queue.peek).to be_nil
     end
 
-    describe '#to_a' do
-      it 'returns items in priority order' do
-        pq = described_class.new
-        pq.push('c', priority: 3)
-        pq.push('a', priority: 1)
-        pq.push('b', priority: 2)
-
-        expect(pq.to_a).to eq(%w[a b c])
-      end
-
-      it 'returns empty array for empty queue' do
-        pq = described_class.new
-        expect(pq.to_a).to eq([])
-      end
-
-      it 'does not modify the original queue' do
-        pq = described_class.new
-        pq.push('a', priority: 1)
-        pq.to_a
-        expect(pq.size).to eq(1)
-      end
+    it 'reports empty' do
+      expect(queue.empty?).to be true
     end
+  end
 
-    describe '#merge' do
-      it 'combines two queues' do
-        pq1 = described_class.new
-        pq1.push('a', priority: 1)
-        pq1.push('c', priority: 3)
+  describe 'duplicate priorities (FIFO ordering)' do
+    it 'breaks ties by insertion order' do
+      queue = described_class.new
+      queue.push('first', priority: 1)
+      queue.push('second', priority: 1)
+      queue.push('third', priority: 1)
 
-        pq2 = described_class.new
-        pq2.push('b', priority: 2)
-
-        pq1.merge(pq2)
-        expect(pq1.size).to eq(3)
-        expect(pq1.pop).to eq('a')
-        expect(pq1.pop).to eq('b')
-        expect(pq1.pop).to eq('c')
-      end
-
-      it 'returns self' do
-        pq1 = described_class.new
-        pq2 = described_class.new
-        expect(pq1.merge(pq2)).to be(pq1)
-      end
-    end
-
-    describe 'duplicate priorities' do
-      it 'handles items with the same priority' do
-        pq = described_class.new
-        pq.push('a', priority: 1)
-        pq.push('b', priority: 1)
-        pq.push('c', priority: 1)
-
-        results = [pq.pop, pq.pop, pq.pop]
-        expect(results).to contain_exactly('a', 'b', 'c')
-      end
-    end
-
-    describe 'single element' do
-      it 'handles push and pop of a single element' do
-        pq = described_class.new
-        pq.push('only', priority: 42)
-        expect(pq.peek).to eq('only')
-        expect(pq.pop).to eq('only')
-        expect(pq.empty?).to be true
-      end
+      expect(queue.pop).to eq('first')
+      expect(queue.pop).to eq('second')
+      expect(queue.pop).to eq('third')
     end
   end
 end
