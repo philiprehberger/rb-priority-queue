@@ -15,7 +15,7 @@ Binary heap priority queue with min/max modes, custom comparators, and priority 
 Add to your Gemfile:
 
 ```ruby
-gem 'philiprehberger-priority_queue'
+gem "philiprehberger-priority_queue"
 ```
 
 Or install directly:
@@ -74,45 +74,19 @@ queue.clear             # removes all items
 
 ## API
 
-### `Queue.new(mode: :min, &comparator)`
-
-Creates a new priority queue. Mode can be `:min` (default) or `:max`. An optional block provides a custom comparator.
-
-### `#push(item, priority:)` / `#<<`
-
-Adds an item with the given priority. Returns self. The `<<` operator accepts a hash: `queue << { item: 'x', priority: 1 }`.
-
-### `#pop`
-
-Removes and returns the highest-priority item. Returns `nil` if empty.
-
-### `#peek`
-
-Returns the highest-priority item without removing it. Returns `nil` if empty.
-
-### `#size` / `#empty?`
-
-Returns the number of items or whether the queue is empty.
-
-### `#change_priority(item, new_priority)`
-
-Updates the priority of an existing item and re-heapifies. Raises `ArgumentError` if the item is not found.
-
-### `#to_a`
-
-Returns all items sorted by priority.
-
-### `#include?(item)`
-
-Returns `true` if the item is in the queue.
-
-### `#clear`
-
-Removes all items from the queue.
-
-### `#merge(other)`
-
-Returns a new queue containing items from both queues. Does not modify the originals.
+| Method | Description |
+|--------|-------------|
+| `Queue.new(mode: :min, &comparator)` | Create a priority queue; mode can be `:min` or `:max`; optional custom comparator block |
+| `#push(item, priority:)` | Add an item with the given priority |
+| `#pop` | Remove and return the highest-priority item |
+| `#peek` | Return the highest-priority item without removing it |
+| `#size` | Return the number of items in the queue |
+| `#empty?` | Return `true` if the queue has no items |
+| `#change_priority(item, new_priority)` | Update the priority of an existing item and re-heapify |
+| `#to_a` | Return all items sorted by priority |
+| `#include?(item)` | Return `true` if the item is in the queue |
+| `#clear` | Remove all items from the queue |
+| `#merge(other)` | Return a new queue containing items from both queues |
 
 ## Development
 
