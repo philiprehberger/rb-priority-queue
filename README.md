@@ -31,45 +31,78 @@ require "philiprehberger/priority_queue"
 
 # Min-heap (default) - lowest priority first
 queue = Philiprehberger::PriorityQueue::Queue.new
-queue.push('low', priority: 1)
-queue.push('high', priority: 10)
-queue.push('mid', priority: 5)
+queue.push("low", priority: 1)
+queue.push("high", priority: 10)
+queue.push("mid", priority: 5)
 
 queue.pop   # => "low"
 queue.pop   # => "mid"
 queue.pop   # => "high"
 
-# Max-heap - highest priority first
-queue = Philiprehberger::PriorityQueue::Queue.new(mode: :max)
-queue.push('task_a', priority: 3)
-queue.push('task_b', priority: 7)
-queue.pop   # => "task_b"
-
-# Custom comparator
-queue = Philiprehberger::PriorityQueue::Queue.new { |a, b| a.length <=> b.length }
-queue.push('short', priority: 'short')
-queue.push('very long', priority: 'very long')
-queue.pop   # => "short"
-
 # Peek without removing
+queue.push("item", priority: 1)
+queue.peek   # => "item"
+queue.size   # => 1
+queue.empty? # => false
+
+# Shovel operator for hash-based push
+queue << { item: "task", priority: 3 }
+```
+
+### Max-Heap Mode
+
+Pass `mode: :max` to pop the highest priority first.
+
+```ruby
+queue = Philiprehberger::PriorityQueue::Queue.new(mode: :max)
+queue.push("task_a", priority: 3)
+queue.push("task_b", priority: 7)
+queue.push("task_c", priority: 1)
+
+queue.pop # => "task_b"
+queue.pop # => "task_a"
+queue.pop # => "task_c"
+```
+
+### Custom Comparator
+
+Supply a block to define your own ordering. The block receives two priorities and must return `-1`, `0`, or `1`.
+
+```ruby
+queue = Philiprehberger::PriorityQueue::Queue.new { |a, b| a.length <=> b.length }
+queue.push("short", priority: "short")
+queue.push("very long", priority: "very long")
+queue.pop # => "short"
+```
+
+### Priority Updates
+
+Change the priority of an item already in the queue. The heap re-balances automatically.
+
+```ruby
 queue = Philiprehberger::PriorityQueue::Queue.new
-queue.push('item', priority: 1)
-queue.peek  # => "item"
-queue.size  # => 1
+queue.push("task_a", priority: 10)
+queue.push("task_b", priority: 5)
 
-# Change priority
-queue = Philiprehberger::PriorityQueue::Queue.new
-queue.push('task', priority: 10)
-queue.change_priority('task', 1)  # now highest priority in min-heap
+queue.change_priority("task_a", 1) # task_a is now highest priority
+queue.pop # => "task_a"
+```
 
-# Merge queues
-merged = queue1.merge(queue2)
+### Merging Queues
 
-# Other operations
-queue.include?('task')  # => true
-queue.to_a              # => items sorted by priority
-queue.empty?            # => false
-queue.clear             # removes all items
+Combine two queues into a new queue. The originals are unchanged.
+
+```ruby
+q1 = Philiprehberger::PriorityQueue::Queue.new
+q1.push("a", priority: 1)
+q1.push("b", priority: 3)
+
+q2 = Philiprehberger::PriorityQueue::Queue.new
+q2.push("c", priority: 2)
+
+merged = q1.merge(q2)
+merged.to_a # => ["a", "c", "b"]
+merged.size # => 3
 ```
 
 ## API
@@ -77,15 +110,16 @@ queue.clear             # removes all items
 | Method | Description |
 |--------|-------------|
 | `Queue.new(mode: :min, &comparator)` | Create a priority queue; mode can be `:min` or `:max`; optional custom comparator block |
-| `#push(item, priority:)` | Add an item with the given priority |
-| `#pop` | Remove and return the highest-priority item |
-| `#peek` | Return the highest-priority item without removing it |
+| `#push(item, priority:)` | Add an item with the given priority; returns `self` for chaining |
+| `#<<(item:, priority:)` | Shovel operator; push via a hash with `:item` and `:priority` keys |
+| `#pop` | Remove and return the highest-priority item; returns `nil` when empty |
+| `#peek` | Return the highest-priority item without removing it; returns `nil` when empty |
 | `#size` | Return the number of items in the queue |
 | `#empty?` | Return `true` if the queue has no items |
-| `#change_priority(item, new_priority)` | Update the priority of an existing item and re-heapify |
-| `#to_a` | Return all items sorted by priority |
+| `#change_priority(item, new_priority)` | Update the priority of an existing item and re-heapify; raises `ArgumentError` if item not found |
+| `#to_a` | Return all items sorted by priority with FIFO tie-breaking |
 | `#include?(item)` | Return `true` if the item is in the queue |
-| `#clear` | Remove all items from the queue |
+| `#clear` | Remove all items from the queue; returns `self` |
 | `#merge(other)` | Return a new queue containing items from both queues |
 
 ## Development
