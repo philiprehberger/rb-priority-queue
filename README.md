@@ -3,6 +3,7 @@
 [![Tests](https://github.com/philiprehberger/rb-priority-queue/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rb-priority-queue/actions/workflows/ci.yml)
 [![Gem Version](https://badge.fury.io/rb/philiprehberger-priority_queue.svg)](https://rubygems.org/gems/philiprehberger-priority_queue)
 [![License](https://img.shields.io/github/license/philiprehberger/rb-priority-queue)](LICENSE)
+[![Sponsor](https://img.shields.io/badge/sponsor-GitHub%20Sponsors-ec6cb9)](https://github.com/sponsors/philiprehberger)
 
 Binary heap priority queue with min/max modes, custom comparators, and priority updates
 
@@ -132,4 +133,4 @@ bundle exec rubocop
 
 ## License
 
-MIT
+[MIT](LICENSE)
