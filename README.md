@@ -88,6 +88,84 @@ queue.change_priority("task_a", 1) # task_a is now highest priority
 queue.pop # => "task_a"
 ```
 
+### Batch Push
+
+Add multiple items at once from an array of hashes.
+
+```ruby
+queue = Philiprehberger::PriorityQueue::Queue.new
+queue.push_many([
+  { item: "email", priority: 2 },
+  { item: "backup", priority: 5 },
+  { item: "alert", priority: 1 }
+])
+
+queue.pop # => "alert"
+```
+
+### Peek Priority
+
+Return just the top priority value without the item.
+
+```ruby
+queue = Philiprehberger::PriorityQueue::Queue.new
+queue.push("task", priority: 7)
+queue.peek_priority # => 7
+```
+
+### Drain
+
+Pop all items and return them as an array in priority order.
+
+```ruby
+queue = Philiprehberger::PriorityQueue::Queue.new
+queue.push("c", priority: 3)
+queue.push("a", priority: 1)
+queue.push("b", priority: 2)
+
+queue.drain # => ["a", "b", "c"]
+queue.empty? # => true
+```
+
+### Delete
+
+Remove a specific item by value.
+
+```ruby
+queue = Philiprehberger::PriorityQueue::Queue.new
+queue.push("a", priority: 1)
+queue.push("b", priority: 2)
+
+queue.delete("a") # => "a"
+queue.size # => 1
+```
+
+### Priorities
+
+Return a sorted array of unique priority values currently in the queue.
+
+```ruby
+queue = Philiprehberger::PriorityQueue::Queue.new
+queue.push("a", priority: 3)
+queue.push("b", priority: 1)
+queue.push("c", priority: 3)
+
+queue.priorities # => [1, 3]
+```
+
+### Enumerable
+
+The queue includes `Enumerable`, yielding `[item, priority]` pairs in priority order without modifying the queue.
+
+```ruby
+queue = Philiprehberger::PriorityQueue::Queue.new
+queue.push("x", priority: 10)
+queue.push("y", priority: 5)
+
+queue.map { |item, priority| "#{item}:#{priority}" } # => ["y:5", "x:10"]
+queue.select { |_item, priority| priority > 7 }      # => [["x", 10]]
+```
+
 ### Merging Queues
 
 Combine two queues into a new queue. The originals are unchanged.
@@ -121,6 +199,12 @@ merged.size # => 3
 | `#include?(item)` | Return `true` if the item is in the queue |
 | `#clear` | Remove all items from the queue; returns `self` |
 | `#merge(other)` | Return a new queue containing items from both queues |
+| `#push_many(items)` | Batch push from array of hashes `[{ item: x, priority: n }, ...]`; returns `self` |
+| `#peek_priority` | Return just the top priority value; returns `nil` when empty |
+| `#drain` | Pop all items and return as array in priority order; empties the queue |
+| `#delete(item)` | Remove a specific item by value; returns the item or `nil` |
+| `#priorities` | Return sorted array of unique priority values in the queue |
+| `#each` | Yield `[item, priority]` pairs in priority order (Enumerable) |
 
 ## Development
 

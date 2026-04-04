@@ -7,6 +7,16 @@ and this gem adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-04-03
+
+### Added
+- Include `Enumerable` module with `each` yielding `[item, priority]` pairs in priority order
+- `push_many(items)` for batch pushing from array of hashes
+- `peek_priority` to return just the top priority value
+- `drain` to pop all items and return as array in priority order
+- `delete(item)` to remove a specific item by value
+- `priorities` to return sorted array of unique priority values
+
 ## [0.1.11] - 2026-03-31
 
 ### Added
