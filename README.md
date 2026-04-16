@@ -103,6 +103,18 @@ queue.push_many([
 queue.pop # => "alert"
 ```
 
+### Bulk Insertion
+
+Insert multiple items from a hash, look up the priority of an item, and search in priority order.
+
+```ruby
+queue = Philiprehberger::PriorityQueue::Queue.new
+queue.bulk_push("email" => 2, "backup" => 5, "alert" => 1)
+
+queue.priority_of("backup")            # => 5
+queue.find { |_item, priority| priority > 1 } # => ["email", 2]
+```
+
 ### Peek Priority
 
 Return just the top priority value without the item.
@@ -221,6 +233,9 @@ merged.size # => 3
 | `#delete(item)` | Remove a specific item by value; returns the item or `nil` |
 | `#priorities` | Return sorted array of unique priority values in the queue |
 | `#each` | Yield `[item, priority]` pairs in priority order (Enumerable) |
+| `#bulk_push(items_hash)` | Insert multiple items from a hash `{ item => priority, ... }`; returns `self`; raises `ArgumentError` for non-Hash input |
+| `#priority_of(item)` | Return the priority of the first matching item (O(n) linear scan); returns `nil` if not present |
+| `#find(&block)` | Yield `[item, priority]` pairs in priority order and return the first pair for which the block is truthy; returns `nil` if none match, or an `Enumerator` when no block is given |
 
 ## Development
 

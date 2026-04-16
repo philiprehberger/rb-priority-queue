@@ -153,6 +153,48 @@ module Philiprehberger
         @heap.map { |entry| entry[0] }.uniq.sort
       end
 
+      # Insert multiple items from a hash in one call.
+      #
+      # @param items_hash [Hash] a mapping of item to priority
+      # @return [self] the queue, for chaining
+      # @raise [ArgumentError] if +items_hash+ is not a Hash
+      def bulk_push(items_hash)
+        raise ArgumentError, "Expected a Hash, got #{items_hash.class}" unless items_hash.is_a?(Hash)
+
+        items_hash.each { |item, priority| push(item, priority: priority) }
+        self
+      end
+
+      # Look up the priority of the first matching item.
+      #
+      # Uses a linear scan (O(n)) over internal storage and returns
+      # the priority associated with the first entry whose item is
+      # +==+ to the argument.
+      #
+      # @param item [Object] the item to look up
+      # @return [Object, nil] the priority of the first match, or +nil+ when not present
+      def priority_of(item)
+        entry = @heap.find { |e| e[2] == item }
+        entry.nil? ? nil : entry[0]
+      end
+
+      # Find the first [item, priority] pair in priority order for which
+      # the block returns a truthy value.
+      #
+      # @yield [item, priority] pairs in priority order
+      # @yieldparam item [Object] the item
+      # @yieldparam priority [Object] the priority
+      # @return [Array, nil] the first matching +[item, priority]+ pair, or +nil+ when none match
+      # @return [Enumerator] if no block is given
+      def find(&block)
+        return enum_for(:find) unless block
+
+        each do |item, priority|
+          return [item, priority] if block.call(item, priority)
+        end
+        nil
+      end
+
       def merge(other)
         merged = self.class.new(&@comparator)
         @heap.each { |entry| merged.push(entry[2], priority: entry[0]) }

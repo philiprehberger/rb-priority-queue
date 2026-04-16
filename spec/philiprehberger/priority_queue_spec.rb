@@ -714,4 +714,94 @@ RSpec.describe Philiprehberger::PriorityQueue::Queue do
       expect(queue.priorities).to eq([-1, 0, 2.5])
     end
   end
+
+  describe '#bulk_push' do
+    it 'returns self for chaining' do
+      queue = described_class.new
+      result = queue.bulk_push('a' => 1, 'b' => 2)
+      expect(result).to be(queue)
+    end
+
+    it 'maintains heap invariant when popping after bulk insert' do
+      queue = described_class.new
+      queue.bulk_push('c' => 3, 'a' => 1, 'b' => 2, 'd' => 4)
+
+      result = []
+      result << queue.pop until queue.empty?
+      expect(result).to eq(%w[a b c d])
+    end
+
+    it 'raises ArgumentError when not passed a Hash' do
+      queue = described_class.new
+      expect { queue.bulk_push([%w[a 1]]) }.to raise_error(ArgumentError)
+      expect { queue.bulk_push('nope') }.to raise_error(ArgumentError)
+    end
+  end
+
+  describe '#priority_of' do
+    it 'returns the priority of a present item' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 7)
+
+      expect(queue.priority_of('b')).to eq(7)
+    end
+
+    it 'returns nil for an absent item' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+
+      expect(queue.priority_of('missing')).to be_nil
+    end
+
+    it 'returns the first insertion priority for duplicate items' do
+      queue = described_class.new
+      queue.push('dup', priority: 5)
+      queue.push('dup', priority: 10)
+
+      expect(queue.priority_of('dup')).to eq(5)
+    end
+  end
+
+  describe '#find' do
+    it 'returns the first matching [item, priority] pair in priority order' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 2)
+      queue.push('c', priority: 3)
+
+      result = queue.find { |_item, priority| priority > 1 }
+      expect(result).to eq(['b', 2])
+    end
+
+    it 'returns nil when no pair matches the predicate' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 2)
+
+      expect(queue.find { |_item, priority| priority > 100 }).to be_nil
+    end
+
+    it 'short-circuits and does not iterate every entry' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 2)
+      queue.push('c', priority: 3)
+
+      seen = []
+      queue.find do |item, priority|
+        seen << item
+        priority >= 2
+      end
+
+      expect(seen).to eq(%w[a b])
+    end
+
+    it 'returns an Enumerator when called without a block' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+
+      expect(queue.find).to be_a(Enumerator)
+    end
+  end
 end
