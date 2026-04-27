@@ -69,6 +69,21 @@ module Philiprehberger
         result
       end
 
+      # Return the top +n+ items in priority order without removing them.
+      #
+      # When the queue is empty or +n+ is zero, returns +[]+. When +n+ is
+      # greater than or equal to the size, returns all items in priority order.
+      # The queue is not modified.
+      #
+      # @param n [Integer] the maximum number of items to return; must be non-negative
+      # @return [Array] the top +n+ items in priority order, or fewer when the queue is smaller
+      # @raise [ArgumentError] if +n+ is negative
+      def peek_n(n)
+        raise ArgumentError, "n must be non-negative, got #{n}" if n.negative?
+
+        to_a.first(n)
+      end
+
       def empty?
         @size.zero?
       end

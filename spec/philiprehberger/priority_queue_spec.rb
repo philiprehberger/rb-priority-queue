@@ -626,6 +626,76 @@ RSpec.describe Philiprehberger::PriorityQueue::Queue do
     end
   end
 
+  describe '#peek_n' do
+    it 'returns [] when n is 0' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 2)
+
+      expect(queue.peek_n(0)).to eq([])
+      expect(queue.size).to eq(2)
+    end
+
+    it 'raises ArgumentError for negative n' do
+      queue = described_class.new
+      expect { queue.peek_n(-1) }.to raise_error(ArgumentError, 'n must be non-negative, got -1')
+    end
+
+    it 'returns [] for an empty queue' do
+      queue = described_class.new
+      expect(queue.peek_n(5)).to eq([])
+    end
+
+    it 'returns the top n items in priority order when n is smaller than size' do
+      queue = described_class.new
+      queue.push('c', priority: 3)
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 2)
+      queue.push('d', priority: 4)
+
+      expect(queue.peek_n(2)).to eq(%w[a b])
+    end
+
+    it 'returns all items in priority order when n equals size' do
+      queue = described_class.new
+      queue.push('c', priority: 3)
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 2)
+
+      expect(queue.peek_n(3)).to eq(%w[a b c])
+    end
+
+    it 'returns all items when n exceeds size' do
+      queue = described_class.new
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 2)
+      queue.push('c', priority: 3)
+
+      expect(queue.peek_n(queue.size + 5)).to eq(%w[a b c])
+    end
+
+    it 'does not modify the queue' do
+      queue = described_class.new
+      queue.push('c', priority: 3)
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 2)
+
+      queue.peek_n(2)
+
+      expect(queue.size).to eq(3)
+      expect(queue.to_a).to eq(%w[a b c])
+    end
+
+    it 'returns largest first for max-heap mode' do
+      queue = described_class.new(mode: :max)
+      queue.push('a', priority: 1)
+      queue.push('b', priority: 3)
+      queue.push('c', priority: 2)
+
+      expect(queue.peek_n(2)).to eq(%w[b c])
+    end
+  end
+
   describe '#delete' do
     it 'removes and returns the item' do
       queue = described_class.new

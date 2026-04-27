@@ -154,6 +154,21 @@ queue.pop_n(5) # => ["c"]
 queue.pop_n(0) # => []
 ```
 
+### Peek N
+
+Return the top `n` items in priority order without removing them. The queue is unchanged.
+
+```ruby
+queue = Philiprehberger::PriorityQueue::Queue.new
+queue.push("a", priority: 1)
+queue.push("b", priority: 2)
+queue.push("c", priority: 3)
+
+queue.peek_n(2) # => ["a", "b"]
+queue.peek_n(5) # => ["a", "b", "c"]
+queue.size      # => 3
+```
+
 ### Delete
 
 Remove a specific item by value.
@@ -230,6 +245,7 @@ merged.size # => 3
 | `#peek_priority` | Return just the top priority value; returns `nil` when empty |
 | `#drain` | Pop all items and return as array in priority order; empties the queue |
 | `#pop_n(n)` | Pop up to `n` items in priority order and return as array; returns `[]` for empty queue or `n == 0`; raises `ArgumentError` for negative `n` |
+| `#peek_n(n)` | Return up to `n` items in priority order without removing them; returns `[]` for empty queue or `n == 0`; raises `ArgumentError` for negative `n` |
 | `#delete(item)` | Remove a specific item by value; returns the item or `nil` |
 | `#priorities` | Return sorted array of unique priority values in the queue |
 | `#each` | Yield `[item, priority]` pairs in priority order (Enumerable) |
